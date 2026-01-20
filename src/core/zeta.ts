@@ -9,14 +9,21 @@ export class ZetaComponent {
   constructor(protected selector: string) {}
 
   mount(): void {
+    console.log(`Mounting component to ${this.selector}`);
     this.element = document.querySelector(this.selector);
     if (this.element) {
       this.render();
     }
   }
 
+  protected data: any = {};
+
   protected render(): void {
     // Override in subclass
+  }
+
+  protected getTemplate(): string {
+    return ''; // Override in subclass
   }
 }
 
