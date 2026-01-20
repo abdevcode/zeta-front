@@ -1,4 +1,4 @@
-import { Zeta, ZetaComponent } from './index';
+import { Zeta, ZetaComponent } from '../src/index';
 
 class AppComponent extends ZetaComponent {
   constructor() {
