@@ -12,4 +12,9 @@ export class CounterComponent extends ZetaComponent {
   protected getTemplate(): string {
     return template;
   }
+
+  increment(): void {
+    this.data.count++;
+    this.render();
+  }
 }

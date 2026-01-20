@@ -34,9 +34,67 @@ export class ZetaComponent {
       });
       this.element.innerHTML = template;
       
+      // Bind event listeners
+      this.bindEvents();
+      
       // Process custom components
       this.mountCustomComponents();
     }
+  }
+
+  private bindEvents(): void {
+    if (!this.element) return;
+
+    // Find all elements with @event attributes
+    const elements = this.element.querySelectorAll('[\\@click], [\\@input], [\\@change], [\\@submit]');
+    elements.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      
+      // Handle @click
+      const clickHandler = htmlEl.getAttribute('@click');
+      if (clickHandler) {
+        htmlEl.removeAttribute('@click');
+        htmlEl.addEventListener('click', (e) => {
+          if (typeof (this as any)[clickHandler] === 'function') {
+            (this as any)[clickHandler](e);
+          }
+        });
+      }
+      
+      // Handle @input
+      const inputHandler = htmlEl.getAttribute('@input');
+      if (inputHandler) {
+        htmlEl.removeAttribute('@input');
+        htmlEl.addEventListener('input', (e) => {
+          if (typeof (this as any)[inputHandler] === 'function') {
+            (this as any)[inputHandler](e);
+          }
+        });
+      }
+
+      // Handle @change
+      const changeHandler = htmlEl.getAttribute('@change');
+      if (changeHandler) {
+        htmlEl.removeAttribute('@change');
+        htmlEl.addEventListener('change', (e) => {
+          if (typeof (this as any)[changeHandler] === 'function') {
+            (this as any)[changeHandler](e);
+          }
+        });
+      }
+
+      // Handle @submit
+      const submitHandler = htmlEl.getAttribute('@submit');
+      if (submitHandler) {
+        htmlEl.removeAttribute('@submit');
+        htmlEl.addEventListener('submit', (e) => {
+          e.preventDefault();
+          if (typeof (this as any)[submitHandler] === 'function') {
+            (this as any)[submitHandler](e);
+          }
+        });
+      }
+    });
   }
 
   private mountCustomComponents(): void {
