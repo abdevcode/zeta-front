@@ -8,17 +8,6 @@ class AppComponent extends ZetaComponent {
     };
   }
 
-  protected render(): void {
-    if (this.element) {
-      let template = this.getTemplate();
-      // Replace {{ propertyName }} with actual values (handles spaces)
-      template = template.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, prop) => {
-        return this.data[prop] || '';
-      });
-      this.element.innerHTML = template;
-    }
-  }
-
   protected getTemplate(): string {
     return `
       <h1>Zeta Framework</h1>

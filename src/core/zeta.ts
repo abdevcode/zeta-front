@@ -19,7 +19,14 @@ export class ZetaComponent {
   protected data: any = {};
 
   protected render(): void {
-    // Override in subclass
+    if (this.element) {
+      let template = this.getTemplate();
+      // Replace {{ propertyName }} with actual values (handles spaces)
+      template = template.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, prop) => {
+        return this.data[prop] || '';
+      });
+      this.element.innerHTML = template;
+    }
   }
 
   protected getTemplate(): string {
