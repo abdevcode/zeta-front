@@ -1,4 +1,8 @@
 import { Zeta, ZetaComponent } from '../src/index';
+import { CounterComponent } from './components/counter/counter.component';
+
+// Register custom components
+ZetaComponent.register('counter-component', CounterComponent);
 
 class AppComponent extends ZetaComponent {
   constructor() {
@@ -13,6 +17,7 @@ class AppComponent extends ZetaComponent {
       <h1>Zeta Framework</h1>
       <p>Your custom frontend framework is ready!</p>
       <p>{{ message }}</p>
+      <counter-component></counter-component>
     `;
   }
 }
