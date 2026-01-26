@@ -1,8 +1,9 @@
 <div>
     <h2>Counter Component</h2>
-    <p>Current Count: {{ count }}</p>
+    <p>Current Count: {{ count() }}</p>
     <button @click="increment">Increment</button>
-    <p>My name is {{ name }}</p>
+    <p>My name is {{ name() }} {{ name() }} {{ name() }} {{ name() }} <span>This still works {{ name() }}</span> so... {{ name() }}</p>
+    <input type="text" @model="name" />
     <input type="text" @model="name" />
     <button @click="send">Send</button>
 </div>

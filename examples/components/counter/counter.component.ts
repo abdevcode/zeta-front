@@ -1,13 +1,13 @@
 import { ZetaComponent } from "../../../src/core/zeta";
+import { Signal, signal } from "../../../src/core/signal/signal";
 import template from './counter.component.html';
 
 export class CounterComponent extends ZetaComponent {
+  public count: Signal<number> = signal(0);
+  public name: Signal<string> = signal('John Doe');
+
   constructor() {
     super('');  // No selector needed for registered components
-    this.data = {
-      count: 0,
-      name: 'John Doe'
-    };
   }
 
   protected getTemplate(): string {
@@ -15,11 +15,13 @@ export class CounterComponent extends ZetaComponent {
   }
 
   increment(): void {
-    this.data.count++;
-    this.render();
+    this.count.update((n: number) => n + 1);
   }
 
   send(): void {
-    console.log(this.data);
+    console.log({
+      count: this.count.get(),
+      name: this.name.get()
+    });
   }
 }
