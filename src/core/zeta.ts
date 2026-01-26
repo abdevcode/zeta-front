@@ -5,14 +5,14 @@
 
 import { handleBinding } from "./data-binding/data-binding";
 import { handleEvent } from "./event-handler/event-handler";
-import { Signal } from "./signal/signal";
+import { isSignal } from "./signal/signal";
 
 type ComponentConstructor = new () => ZetaComponent;
 
 export class ZetaComponent {
   private static registry: Map<string, ComponentConstructor> = new Map();
   protected element: HTMLElement | null = null;
-  private textNodeBindings: Map<string, Array<{ node: Text; template: string }>> = new Map();
+  private textNodeBindings: Array<{ node: Text; template: string; expressions: Array<{ match: string; code: string }> }> = [];
 
   constructor(protected selector: string) {}
 
@@ -53,23 +53,18 @@ export class ZetaComponent {
   }
 
   private updateAllTextNodes(): void {
-    Object.keys(this).forEach(key => {
-      const value = (this as any)[key];
-      if (value instanceof Signal) {
-        this.updateTextNodes(key, value.get());
-      }
-    });
+    this.updateTextNodes();
   }
 
   private setupSignalSubscriptions(): void {
     if (!this.element) return;
     
-    // Iterate over all properties of the component instance
+    // Iterate over all properties to set up subscriptions
     Object.keys(this).forEach(key => {
       const value = (this as any)[key];
-      if (value instanceof Signal) {
+      if (isSignal(value)) {
         value.subscribe(() => {
-          this.updateTextNodes(key, value.get());
+          this.updateTextNodes();
         });
       }
     });
@@ -78,7 +73,7 @@ export class ZetaComponent {
   private cacheTextNodeBindings(): void {
     if (!this.element) return;
     
-    this.textNodeBindings.clear();
+    this.textNodeBindings = [];
     
     const walker = document.createTreeWalker(
       this.element,
@@ -91,52 +86,56 @@ export class ZetaComponent {
       const textNode = node as Text;
       if (!textNode.nodeValue) continue;
       
-      // Store the original template pattern for this text node
       const template = textNode.nodeValue;
       
-      // Find all properties referenced in this text node
-      const patterns = [
-        /\{\{\s*(\w+)\s*\(\s*\)\s*\}\}/g, // match functions like {{ property() }}
-        /\{\{\s*(\w+)\s*\}\}/g            // match properties like {{ property }}
-      ];
+      // Find all {{ expression }} patterns
+      const expressionPattern = /\{\{\s*(.+?)\s*\}\}/g;
+      const expressions: Array<{ match: string; code: string }> = [];
       
-      /**
-       * Collect all unique properties found in the text node
-       */
-      const foundProperties = new Set<string>();
-      patterns.forEach(pattern => {
-        const matches = template.matchAll(pattern);
-        for (const match of matches) {
-          foundProperties.add(match[1]);
-        }
-      });
-
-      // Store each text node only once per property
-      foundProperties.forEach(property => {
-        if (!this.textNodeBindings.has(property)) {
-          this.textNodeBindings.set(property, []);
-        }
-        this.textNodeBindings.get(property)!.push({ node: textNode, template });
-      });
+      let match;
+      while ((match = expressionPattern.exec(template)) !== null) {
+        expressions.push({
+          match: match[0],  // Full match like "{{ count() }}"
+          code: match[1]    // Just the expression like "count()"
+        });
+      }
+      
+      if (expressions.length > 0) {
+        this.textNodeBindings.push({ node: textNode, template, expressions });
+      }
     }
   }
 
-  private updateTextNodes(property: string, value: any): void {
-    const bindings = this.textNodeBindings.get(property);
-    if (!bindings) return;
-
-    const patterns = [
-      new RegExp(`\\{\\{\\s*${property}\\s*\\(\\s*\\)\\s*\\}\\}`, 'g'),
-      new RegExp(`\\{\\{\\s*${property}\\s*\\}\\}`, 'g')
-    ];
-
-    bindings.forEach(({ node, template }) => {
+  private updateTextNodes(): void {
+    this.textNodeBindings.forEach(({ node, template, expressions }) => {
       let newValue = template;
-      patterns.forEach(pattern => {
-        newValue = newValue.replace(pattern, String(value));
+      
+      expressions.forEach(({ match, code }) => {
+        try {
+          // Evaluate the expression in the context of the component
+          const result = this.evaluateExpression(code);
+          newValue = newValue.replace(match, String(result));
+        } catch (error) {
+          console.error(`Error evaluating expression "${code}":`, error);
+          newValue = newValue.replace(match, '');
+        }
       });
+      
       node.nodeValue = newValue;
     });
+  }
+  
+  private evaluateExpression(code: string): any {
+    const context = new Proxy({}, {
+      get: (_, prop) => {
+        const value = (this as any)[prop];
+        if (typeof value === 'function') return value.bind(this);
+        return value;
+      },
+      has: (_, prop) => prop in this
+    });
+    
+    return new Function('$ctx', `with($ctx) { return ${code}; }`)(context);
   }
 
   private bindEvents(): void {

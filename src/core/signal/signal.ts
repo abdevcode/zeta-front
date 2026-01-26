@@ -3,9 +3,24 @@ type Subscriber = () => void;
 // Global context for tracking the current effect
 let currentEffect: Subscriber | null = null;
 
-export class Signal<T> {
+// Symbol to identify signals
+const SIGNAL_SYMBOL = Symbol('Signal');
+
+// Callable Signal type
+export interface Signal<T> {
+  (): T;
+  (value: T): void;
+  get(): T;
+  set(value: T): void;
+  update(updater: (current: T) => T): void;
+  subscribe(subscriber: Subscriber): () => void;
+  [SIGNAL_SYMBOL]: true;
+}
+
+class SignalImpl<T> {
   private value: T;
   private subscribers: Set<Subscriber> = new Set();
+  [SIGNAL_SYMBOL] = true as const;
 
   constructor(initialValue: T) {
     this.value = initialValue;
@@ -40,8 +55,26 @@ export class Signal<T> {
   }
 }
 
+export function isSignal(value: any): value is Signal<any> {
+  return typeof value === 'function' && SIGNAL_SYMBOL in value;
+}
+
 export function signal<T>(initialValue: T): Signal<T> {
-  return new Signal(initialValue);
+  const sig = new SignalImpl(initialValue);
+  
+  // Create a callable function
+  const callable = function(this: any, ...args: any[]) {
+    return sig.get();
+  };
+  
+  // Add signal methods and symbol to the function
+  callable.get = sig.get.bind(sig);
+  callable.set = sig.set.bind(sig);
+  callable.update = sig.update.bind(sig);
+  callable.subscribe = sig.subscribe.bind(sig);
+  (callable as any)[SIGNAL_SYMBOL] = true;
+  
+  return callable as any;
 }
 
 // Effect: runs the function and auto-tracks any signal.get() calls
@@ -64,10 +97,10 @@ export function effect(fn: Subscriber): () => void {
 
 // Computed: creates a derived signal that auto-recomputes when dependencies change
 export function computed<T>(fn: () => T): Signal<T> {
-  const computedSignal = new Signal<T>(undefined as T);
+  const computedSignal = signal<T>(undefined as T);
   
   effect(() => {
-    computedSignal.set(fn()); // Auto-tracks dependencies and updates
+    (computedSignal as any).set(fn()); // Auto-tracks dependencies and updates
   });
   
   return computedSignal;

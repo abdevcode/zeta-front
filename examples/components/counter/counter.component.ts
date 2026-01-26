@@ -11,8 +11,8 @@ export class CounterComponent extends ZetaComponent {
     super('');  // No selector needed for registered components
     effect(() => {
       console.log({
-        count: this.count.get(),
-        isEven: this.isEven.get()
+        count: this.count(),
+        isEven: this.isEven()
       });
     });
   }
@@ -23,11 +23,6 @@ export class CounterComponent extends ZetaComponent {
 
   increment(): void {
     this.count.update((n: number) => n + 1);
-  }
-
-  numberType(): void {
-    const currentCount: number = this.count.get();
-    console.log(`The current count is of type: ${typeof currentCount}`);
   }
 
   send(): void {
