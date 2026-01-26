@@ -3,4 +3,4 @@
  */
 
 export { Zeta, ZetaComponent } from './core/zeta';
-export { signal, Signal } from './core/signal/signal';
+export { signal, Signal, effect, computed } from './core/signal/signal';
