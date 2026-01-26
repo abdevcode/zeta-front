@@ -1,15 +1,31 @@
-import { handleClick } from "./events/click";
-import { handleInput } from "./events/input";
-import { handleChange } from "./events/change";
-import { handleSubmit } from "./events/submit";
+const EVENTS_WITH_PREVENT_DEFAULT = ['submit'];
 
 export function handleEvent(element: HTMLElement, context: any): void {
-  const elements = element.querySelectorAll('[\\@click], [\\@input], [\\@change], [\\@submit]');
-  elements.forEach((el): void => {
+  const allElements = element.querySelectorAll('*');
+  
+  allElements.forEach((el): void => {
     const htmlEl = el as HTMLElement;
-    handleClick(htmlEl, context);
-    handleInput(htmlEl, context);
-    handleChange(htmlEl, context);
-    handleSubmit(htmlEl, context);
+    
+    // Get all attributes starting with @
+    Array.from(htmlEl.attributes).forEach(attr => {
+      if (attr.name.startsWith('@') && attr.name !== '@model') {
+        const eventType = attr.name.slice(1); // Remove @ prefix
+        const handlerName = attr.value;
+        
+        htmlEl.removeAttribute(attr.name);
+        
+        htmlEl.addEventListener(eventType, (e) => {
+          // Prevent default for certain events
+          if (EVENTS_WITH_PREVENT_DEFAULT.includes(eventType)) {
+            e.preventDefault();
+          }
+          
+          // Call the handler method
+          if (typeof context[handlerName] === 'function') {
+            context[handlerName](e);
+          }
+        });
+      }
+    });
   });
 }
