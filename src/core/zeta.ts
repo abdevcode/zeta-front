@@ -3,6 +3,7 @@
  * A lightweight frontend framework
  */
 
+import { handleBinding } from "./data-binding/data-binding";
 import { handleEvent } from "./event-handler/event-handler";
 
 type ComponentConstructor = new () => ZetaComponent;
@@ -48,6 +49,7 @@ export class ZetaComponent {
     if (!this.element) return;
 
     handleEvent(this.element, this);
+    handleBinding(this.element, this);
   }
 
   private mountCustomComponents(): void {
