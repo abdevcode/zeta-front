@@ -25,8 +25,9 @@ export class CounterComponent extends ZetaComponent {
     this.count.update((n: number) => n + 1);
   }
 
-  send(): void {
+  send(event: Event): void {
     console.log({
+      event: event,
       count: this.count.get(),
       isEven: this.isEven.get(),
       name: this.name.get()
