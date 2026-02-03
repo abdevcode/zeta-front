@@ -1,5 +1,8 @@
 <div>
   <li>
-      <ul @for="task in tasks">{{ task.name }}</ul>
+    <ul @for="task in tasks">{{ task.name }}</ul>
   </li>
+  <button @click="addTask()">Add Task</button>
+  <button @click="removeTask()">Remove Task</button>
+  <button @click="updateTask()">Update Task</button>
 </div>
